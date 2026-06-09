@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soccer Scheduler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px;
+  background: #fff;
+  color: #0a0a0a;
+  -webkit-font-smoothing: antialiased;
+}
+
+header {
+  background: #1b2945;
+  border-bottom: none;
+  padding: 0 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+header h1 { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+.hbtns { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+.hbtns .btn {
+  font-size: 12px; padding: 5px 12px;
+  border: 1.5px solid rgba(255,255,255,0.35); background: transparent;
+  color: #fff; cursor: pointer; font-family: inherit; font-weight: 600;
+  display: inline-flex; align-items: center; white-space: nowrap;
+  transition: background 80ms, color 80ms, border-color 80ms;
+}
+.hbtns .btn:hover { background: #3db166; border-color: #3db166; color: #fff; }
+
+nav {
+  background: #fff;
+  border-bottom: 2px solid #e4e8ef;
+  padding: 0 24px;
+  display: flex;
+  overflow-x: auto;
+  position: sticky;
+  top: 52px;
+  z-index: 99;
+}
+nav::-webkit-scrollbar { display: none; }
+.tab {
+  font-size: 13px; font-weight: 600; padding: 11px 14px;
+  border: none; background: none; cursor: pointer; color: #888;
+  border-bottom: 3px solid transparent; margin-bottom: -2px;
+  font-family: inherit; white-space: nowrap;
+}
+.tab:hover { color: #1b2945; }
+.tab.active { color: #1b2945; border-bottom-color: #3db166; }
+
+.page { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+.card { background: #fff; border: 1.5px solid #d0d7e3; padding: 20px; margin-bottom: 14px; }
+.card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #888; margin-bottom: 14px; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.fg { margin-bottom: 10px; }
+
+label { display: block; font-size: 12px; font-weight: 600; color: #444; margin-bottom: 4px; }
+input[type=text], input[type=time], input[type=number], select, textarea {
+  width: 100%; border: 1.5px solid #ccc; padding: 7px 10px;
+  font-size: 14px; font-family: inherit; background: #fff; color: #0a0a0a; outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: #3db166; }
+textarea { resize: vertical; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.65; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 13px; font-family: inherit; font-weight: 600;
+  padding: 7px 14px; border: 1.5px solid #d0d7e3;
+  background: #fff; color: #1b2945; cursor: pointer; white-space: nowrap;
+  transition: background 80ms, border-color 80ms;
+}
+.btn:hover { background: #f4f6fa; border-color: #b0bcd0; }
+.btn-primary { background: #3db166; border-color: #3db166; color: #fff; }
+.btn-primary:hover { background: #339655; border-color: #339655; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.rm { border: none; background: none; color: #bbb; cursor: pointer; font-size: 14px; padding: 0 4px; font-family: inherit; }
+.rm:hover { color: #dc2626; }
+
+table.bkt { width: 100%; border-collapse: collapse; }
+table.bkt th { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #888; text-align: left; padding: 4px 6px 8px; border-bottom: 1.5px solid #d0d7e3; }
+table.bkt td { padding: 5px 6px; }
+table.bkt input { font-size: 13px; padding: 5px 8px; }
+
+.status { padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 14px; border: 1.5px solid; }
+.status-ok   { background: #f0fdf4; border-color: #166534; color: #166534; }
+.status-warn { background: #fffbeb; border-color: #92400e; color: #92400e; }
+.status-err  { background: #fef2f2; border-color: #991b1b; color: #991b1b; }
+
+.ttwrap { overflow-x: auto; border: 1.5px solid #d0d7e3; }
+table.tt { border-collapse: collapse; font-size: 13px; width: 100%; }
+table.tt th {
+  background: #1b2945; border: 1px solid #263a5e;
+  padding: 9px 14px; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em; color: #fff;
+  text-align: left; position: sticky; top: 0; z-index: 10; white-space: nowrap;
+}
+table.tt th.tc { position: sticky; left: 0; z-index: 20; min-width: 70px; }
+table.tt th.rc { min-width: 100px; }
+table.tt td { border: 1px solid #e8e8e8; vertical-align: top; background: #fff; }
+table.tt td.timecell {
+  font-size: 14px; font-weight: 700; color: #1b2945;
+  background: #eef1f8; border: 1px solid #e8e8e8;
+  padding: 0 12px; position: sticky; left: 0; z-index: 5;
+  white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums;
+}
+table.tt td.roundcell {
+  font-size: 13px; font-weight: 600; color: #1b2945;
+  background: #fff; border: 1px solid #e8e8e8; padding: 0 12px; white-space: nowrap;
+}
+table.tt td.bkcell { background: #3db166; color: #fff; font-size: 12px; font-weight: 600; text-align: center; padding: 8px; }
+table.tt td.matchcell { padding: 5px; min-width: 170px; }
+
+.chip { display: flex; gap: 8px; align-items: flex-start; padding: 6px 8px; margin-bottom: 3px; font-size: 13px; line-height: 1.4; }
+.chip:last-child { margin-bottom: 0; }
+.chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.chip .matchup { font-weight: 700; }
+.chip .meta { font-size: 11px; font-weight: 500; color: #888; margin-top: 2px; }
+
+.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.tc2 { background: #fff; border: 1.5px solid #d0d7e3; overflow: hidden; }
+.tc2-h { padding: 10px 14px; background: #1b2945; color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.tc2-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.tc2-sub { font-weight: 500; font-size: 11px; color: #888; margin-left: 2px; }
+/* override sub color since header is dark */
+.tc2-h .tc2-sub { color: rgba(255,255,255,0.5); }
+.tc2-r { padding: 8px 14px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+.tc2-r:last-child { border-bottom: none; }
+.tc2-t { font-size: 13px; font-weight: 700; min-width: 46px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.tc2-badge { font-size: 11px; font-weight: 600; color: #888; margin-left: auto; white-space: nowrap; }
+
+.bk-wrap { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 8px; align-items: flex-start; }
+.bk-round { flex-shrink: 0; min-width: 170px; }
+.bk-rname { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #888; margin-bottom: 10px; }
+.bk-match { border: 1.5px solid #d0d7e3; margin-bottom: 10px; font-size: 13px; overflow: hidden; }
+.bk-t { padding: 8px 12px; border-bottom: 1px solid #e8e8e8; display: flex; gap: 6px; align-items: center; }
+.bk-t:last-child { border-bottom: none; }
+.bk-seed { font-size: 11px; font-weight: 700; color: #888; min-width: 24px; flex-shrink: 0; }
+
+.stn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+table.sn { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.sn th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #888; padding: 5px 8px 8px; border-bottom: 2px solid #1b2945; text-align: left; }
+table.sn td { padding: 8px 8px; border-bottom: 1px solid #f0f0f0; }
+table.sn tr:last-child td { border-bottom: none; }
+
+table.adv { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+table.adv th { font-size: 11px; font-weight: 600; color: #888; text-align: left; padding: 5px 8px 8px; border-bottom: 1.5px solid #d0d7e3; }
+table.adv td { padding: 7px 8px; border-bottom: 1px solid #f0f0f0; }
+table.adv tr:last-child td { border-bottom: none; }
+
+.empty { color: #aaa; font-size: 13px; padding: 20px 0; }
+
+@media (max-width: 768px) {
+  .grid2 { grid-template-columns: 1fr; }
+  .grid3 { grid-template-columns: 1fr 1fr; }
+  .page { padding: 14px 16px; }
+  header { padding: 0 16px; }
+  nav { padding: 0 16px; }
+  .hbtns { gap: 4px; }
+  .team-grid { grid-template-columns: 1fr; }
+  .stn-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .grid3 { grid-template-columns: 1fr; }
+}
+
+@media print { body { display: none; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Soccer Scheduler</h1>
+  <div class="hbtns no-print">
+    <button class="btn" onclick="saveJSON()">Save</button>
+    <button class="btn" onclick="document.getElementById('fi').click()">Load</button>
+    <input type="file" id="fi" accept=".json" style="display:none" onchange="loadJSON(event)">
+    <button class="btn" onclick="exportXLSX()">Export XLSX</button>
+    <button class="btn" onclick="printSchedule()">Print / PDF</button>
+  </div>
+</header>
+
+<nav>
+  <button class="tab active" data-tab="setup">Setup</button>
+  <button class="tab" data-tab="timetable">Timetable</button>
+  <button class="tab" data-tab="teams">Per Team</button>
+  <button class="tab" data-tab="knockout">Knockout</button>
+  <button class="tab" data-tab="standings">Groups</button>
+</nav>
+
+<div class="page">
+
+<div id="panel-setup" class="panel active">
+  <div class="grid2" style="align-items:start">
+    <div>
+      <div class="card">
+        <div class="card-title">Timing</div>
+        <div class="grid3">
+          <div class="fg"><label>Day start</label><input type="time" id="gStart" value="08:00"></div>
+          <div class="fg"><label>Match duration (min)</label><input type="number" id="gMatch" value="10" min="1"></div>
+          <div class="fg"><label>Gap between rounds (min)</label><input type="number" id="gGap" value="10" min="0"></div>
+        </div>
+        <div class="card-title" style="margin-top:6px">Breaks</div>
+        <table class="bkt" style="margin-bottom:10px">
+          <thead><tr><th>Label</th><th>Start</th><th>Duration (min)</th><th></th></tr></thead>
+          <tbody id="brkBody"></tbody>
+        </table>
+        <button class="btn btn-sm" onclick="addBreak()">+ Add break</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Schedule summary</div>
+        <div id="advisoryBox" class="empty">Build a schedule to see the summary.</div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">Paste fixtures</div>
+        <p style="font-size:13px;color:#555;margin-bottom:12px;line-height:1.6">
+          Paste the tab-separated fixture table from your scheduling system.<br>
+          Expected columns: <code style="background:#f5f5f5;padding:2px 5px;font-size:11.5px;font-family:'Courier New',monospace">Round · Group · Table · Team A · Team A Org · Team B · Team B Org</code><br>
+          Header row is automatically skipped.
+        </p>
+        <textarea id="fixtureInput" rows="18" placeholder="Round 1&#9;Group 6&#9;Table 6&#9;The Tank&#9;Dr STEM&#9;Switched-off Zombies&#9;Islamic College&#10;..."></textarea>
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+          <button class="btn btn-primary" onclick="buildSchedule()">Build timetable →</button>
+          <span id="parseStatus" style="font-size:12px;font-weight:600;color:#888"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="panel-timetable" class="panel">
+  <div id="warnBox"></div>
+  <div class="card" style="padding:0;overflow:hidden;border:none">
+    <div class="ttwrap" id="ttWrap"><div class="empty" style="padding:22px">No schedule yet.</div></div>
+  </div>
+</div>
+
+<div id="panel-teams" class="panel">
+  <div class="team-grid" id="teamBox"><div class="empty">No schedule yet.</div></div>
+</div>
+
+<div id="panel-knockout" class="panel">
+  <div class="card">
+    <div class="card-title">Knockout bracket</div>
+    <p style="font-size:13px;color:#888;margin-bottom:14px">Seeded from pool order (1st, 2nd per group) as listed in your fixture data.</p>
+    <div id="bkBox"><div class="empty">No schedule yet.</div></div>
+  </div>
+</div>
+
+<div id="panel-standings" class="panel">
+  <div class="stn-grid" id="stnBox"><div class="empty">No schedule yet.</div></div>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+<script>
+const COLORS = ['#2563eb','#d97706','#db2777','#7c3aed','#059669','#dc2626','#0891b2','#ea580c','#65a30d','#be185d'];
+
+let state = {
+  schedule: [], rounds: [], tables: [], teams: {}, groups: {}, groupColors: {},
+  roundTimes: {}, breakRanges: [],
+  breaks: [{label:'Lunch', start:'12:00', duration:45}],
+  gStart:'08:00', gMatch:10, gGap:10
+};
+
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const name = btn.dataset.tab;
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    btn.classList.add('active');
+  });
+});
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => { if (t.dataset.tab === name) t.click(); });
+}
+
+function renderBreaks() {
+  const tb = document.getElementById('brkBody'); tb.innerHTML = '';
+  state.breaks.forEach((b, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><input type="text" value="${b.label}" oninput="state.breaks[${i}].label=this.value" style="width:130px"></td>
+      <td><input type="time" value="${b.start}" oninput="state.breaks[${i}].start=this.value" style="width:90px"></td>
+      <td><input type="number" value="${b.duration}" min="1" oninput="state.breaks[${i}].duration=+this.value" style="width:60px"></td>
+      <td><button class="rm" onclick="state.breaks.splice(${i},1);renderBreaks()">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+function addBreak() { state.breaks.push({label:'Break',start:'10:00',duration:15}); renderBreaks(); }
+renderBreaks();
+
+function parseFixtures(raw) {
+  const lines = raw.trim().split('\n').map(l => l.trim()).filter(Boolean);
+  const rows = [];
+  for (const line of lines) {
+    const cols = line.split('\t').map(c => c.trim());
+    if (cols.length < 6) continue;
+    if (/^round$/i.test(cols[0])) continue;
+    rows.push({ round: cols[0], group: cols[1], table: cols[2], homeTeam: cols[3], homeOrg: cols[4]||'', awayTeam: cols[5], awayOrg: cols[6]||'' });
+  }
+  return rows;
+}
+
+function naturalSort(a, b) { return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }); }
+
+function buildSchedule() {
+  state.gStart = document.getElementById('gStart').value;
+  state.gMatch = +document.getElementById('gMatch').value;
+  state.gGap   = +document.getElementById('gGap').value;
+  const raw = document.getElementById('fixtureInput').value;
+  if (!raw.trim()) { alert('Paste some fixtures first.'); return; }
+  const rows = parseFixtures(raw);
+  const statusEl = document.getElementById('parseStatus');
+  if (!rows.length) { statusEl.textContent = '⚠ Could not parse — check the format'; statusEl.style.color = '#991b1b'; return; }
+  statusEl.textContent = `✓ ${rows.length} matches parsed`; statusEl.style.color = '#166534';
+
+  const roundSet = [...new Set(rows.map(r => r.round))].sort(naturalSort);
+  const tableSet = [...new Set(rows.map(r => r.table))].sort(naturalSort);
+  const groupSet = [...new Set(rows.map(r => r.group))].sort(naturalSort);
+  const groupColors = {};
+  groupSet.forEach((g, i) => groupColors[g] = COLORS[i % COLORS.length]);
+  const teams = {};
+  rows.forEach(r => {
+    if (!teams[r.homeTeam]) teams[r.homeTeam] = { org: r.homeOrg, group: r.group, color: groupColors[r.group] };
+    if (!teams[r.awayTeam]) teams[r.awayTeam] = { org: r.awayOrg, group: r.group, color: groupColors[r.group] };
+  });
+  const groups = {};
+  rows.forEach(r => {
+    if (!groups[r.group]) groups[r.group] = new Set();
+    groups[r.group].add(r.homeTeam); groups[r.group].add(r.awayTeam);
+  });
+  const breakRanges = state.breaks.map(b => ({ label:b.label, duration:b.duration, startMin:timeToMin(b.start), endMin:timeToMin(b.start)+b.duration }));
+  const roundTimes = {};
+  let cur = timeToMin(state.gStart);
+  for (const round of roundSet) {
+    let moved = true;
+    while (moved) { moved = false; for (const brk of breakRanges) { if (cur < brk.endMin && cur + state.gMatch > brk.startMin) { cur = brk.endMin; moved = true; } } }
+    roundTimes[round] = cur;
+    cur += state.gMatch + state.gGap;
+  }
+  const schedule = rows.map(r => ({ ...r, startMin: roundTimes[r.round], time: minToTime(roundTimes[r.round]), color: groupColors[r.group] }));
+  state.schedule = schedule; state.rounds = roundSet; state.tables = tableSet;
+  state.teams = teams; state.groups = groups; state.groupColors = groupColors;
+  state.roundTimes = roundTimes; state.breakRanges = breakRanges;
+  renderWarnings(); renderTimetable(); renderTeams(); renderKnockout(); renderStandings(); renderAdvisory();
+  showTab('timetable');
+}
+
+function renderWarnings() {
+  const box = document.getElementById('warnBox');
+  const warns = []; const seen = {};
+  state.schedule.forEach(s => { [s.homeTeam, s.awayTeam].forEach(t => { const k = `${s.round}__${t}`; if (seen[k]) warns.push({ type:'err', msg:`${t} appears twice in ${s.round}` }); seen[k] = true; }); });
+  if (!warns.length) {
+    const lastRound = state.rounds[state.rounds.length-1];
+    const endMin = (state.roundTimes[lastRound]||0) + state.gMatch;
+    const dur = ((endMin - timeToMin(state.gStart))/60).toFixed(1);
+    box.innerHTML = `<div class="status status-ok">✓ ${state.schedule.length} matches · ${state.rounds.length} rounds · ${state.tables.length} table(s) · finishes ~${minToTime(endMin)} (${dur}h from start)</div>`;
+  } else { box.innerHTML = warns.map(w => `<div class="status status-${w.type}">${w.msg}</div>`).join(''); }
+}
+
+function renderTimetable() {
+  const timeline = []; const usedBreaks = new Set();
+  for (const round of state.rounds) {
+    const rt = state.roundTimes[round];
+    state.breakRanges.forEach(brk => { if (!usedBreaks.has(brk.label) && brk.startMin <= rt) { timeline.push({ type:'break', ...brk }); usedBreaks.add(brk.label); } });
+    timeline.push({ type:'round', round, startMin: rt });
+  }
+  let h = `<table class="tt"><thead><tr><th class="tc">Time</th><th class="rc">Round</th>`;
+  state.tables.forEach(t => h += `<th>Table ${t}</th>`);
+  h += `</tr></thead><tbody>`;
+  for (const row of timeline) {
+    if (row.type === 'break') {
+      h += `<tr><td class="timecell">${minToTime(row.startMin)}</td><td class="bkcell" colspan="${state.tables.length+1}">${row.label} — ${row.duration} min</td></tr>`;
+    } else {
+      const matches = state.schedule.filter(s => s.round === row.round);
+      h += `<tr><td class="timecell">${minToTime(row.startMin)}</td><td class="roundcell">${row.round}</td>`;
+      state.tables.forEach(tbl => {
+        const cellMatches = matches.filter(s => s.table === tbl);
+        if (cellMatches.length) {
+          h += `<td class="matchcell">`;
+          cellMatches.forEach(m => {
+            h += `<div class="chip" style="background:${m.color}15">
+              <div class="chip-dot" style="background:${m.color}"></div>
+              <div><div class="matchup">${m.homeTeam} <span style="font-weight:400;color:#888">vs</span> ${m.awayTeam}</div>
+              <div class="meta">${m.group}${m.homeOrg ? ' · '+m.homeOrg : ''}</div></div>
+            </div>`;
+          });
+          h += `</td>`;
+        } else { h += `<td></td>`; }
+      });
+      h += `</tr>`;
+    }
+  }
+  h += `</tbody></table>`;
+  document.getElementById('ttWrap').innerHTML = h;
+}
+
+function renderTeams() {
+  const teamNames = Object.keys(state.teams).sort();
+  let h = '';
+  teamNames.forEach(name => {
+    const info = state.teams[name];
+    const matches = state.schedule.filter(s => s.homeTeam === name || s.awayTeam === name).sort((a,b) => a.startMin - b.startMin);
+    h += `<div class="tc2"><div class="tc2-h"><div class="tc2-dot" style="background:${info.color}"></div>${name}<span class="tc2-sub">${info.group}</span></div>`;
+    if (!matches.length) h += `<div class="tc2-r" style="color:#aaa">No matches scheduled</div>`;
+    matches.forEach(m => {
+      const opp = m.homeTeam === name ? m.awayTeam : m.homeTeam;
+      const side = m.homeTeam === name ? 'H' : 'A';
+      h += `<div class="tc2-r"><span class="tc2-t">${m.time}</span><span style="flex:1">vs ${opp}</span><span class="tc2-badge">Table ${m.table}</span></div>`;
+    });
+    h += `</div>`;
+  });
+  document.getElementById('teamBox').innerHTML = h || '<div class="empty">No teams found.</div>';
+}
+
+function renderKnockout() {
+  const groupNames = Object.keys(state.groups).sort(naturalSort);
+  const ranked = [];
+  groupNames.forEach(g => { [...state.groups[g]].forEach((t,i) => ranked.push({ name:t, group:g, groupRank:i+1 })); });
+  const n = ranked.length;
+  if (n < 2) { document.getElementById('bkBox').innerHTML = '<div class="empty">Not enough teams.</div>'; return; }
+  const fmt = n >= 8 ? ['Quarter-finals','Semi-finals','Final'] : n >= 4 ? ['Semi-finals','Final'] : ['Final'];
+  const rounds = []; let cur = ranked;
+  fmt.forEach(rname => {
+    const ms = [], half = Math.floor(cur.length/2);
+    for (let i = 0; i < half; i++) ms.push({ home: cur[i], away: cur[cur.length-1-i] });
+    rounds.push({ name:rname, matches:ms });
+    cur = ms.map(m => ({ name:`W(${m.home?.name||'?'})`, placeholder:true }));
+  });
+  if (fmt.includes('Semi-finals')) rounds.push({ name:'3rd place', matches:[{ home:{name:'SF1 loser'}, away:{name:'SF2 loser'} }] });
+  let h = '<div class="bk-wrap">';
+  rounds.forEach(r => {
+    h += `<div class="bk-round"><div class="bk-rname">${r.name}</div>`;
+    r.matches.forEach(m => {
+      const hs = m.home?.groupRank ? `${m.home.group}${m.home.groupRank}` : '';
+      const as = m.away?.groupRank ? `${m.away.group}${m.away.groupRank}` : '';
+      h += `<div class="bk-match"><div class="bk-t"><span class="bk-seed">${hs}</span>${m.home?.name||'TBD'}</div><div class="bk-t"><span class="bk-seed">${as}</span>${m.away?.name||'TBD'}</div></div>`;
+    });
+    h += `</div>`;
+  });
+  h += '</div>';
+  document.getElementById('bkBox').innerHTML = h;
+}
+
+function renderStandings() {
+  const groupNames = Object.keys(state.groups).sort(naturalSort);
+  let h = '';
+  groupNames.forEach(g => {
+    const col = state.groupColors[g] || '#888';
+    const teams = [...state.groups[g]];
+    // Find which tables this group uses
+    const gTables = [...new Set(state.schedule.filter(s => s.group === g).map(s => s.table))].sort(naturalSort);
+    h += `<div class="card" style="padding:16px 18px">
+      <div style="display:flex;align-items:baseline;gap:10px;padding-bottom:10px;margin-bottom:12px;border-bottom:2px solid ${col}">
+        <span style="font-size:15px;font-weight:700;color:${col}">Group ${g}</span>
+        <span style="font-size:12px;color:#888;font-weight:500">${teams.length} teams · Table${gTables.length>1?'s':''} ${gTables.join(', ')}</span>
+      </div>`;
+    teams.forEach((t, i) => {
+      const info = state.teams[t] || {};
+      const teamTables = [...new Set(state.schedule.filter(s => s.homeTeam===t||s.awayTeam===t).map(s=>s.table))].sort(naturalSort);
+      h += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0f0">
+        <span style="font-size:12px;font-weight:600;color:#ccc;min-width:18px">${i+1}</span>
+        <div style="flex:1"><div style="font-weight:600;font-size:14px">${t}</div>${info.org?`<div style="font-size:12px;color:#888;margin-top:1px">${info.org}</div>`:''}</div>
+        <span style="font-size:12px;color:#888;white-space:nowrap">Table${teamTables.length>1?'s':''} ${teamTables.join(', ')}</span>
+      </div>`;
+    });
+    h += `</div>`;
+  });
+  document.getElementById('stnBox').innerHTML = h || '<div class="empty">No groups found.</div>';
+}
+
+function renderAdvisory() {
+  const groupNames = Object.keys(state.groups).sort(naturalSort);
+  const lastRound = state.rounds[state.rounds.length-1];
+  const endMin = (state.roundTimes[lastRound]||0) + state.gMatch;
+  const totalMin = endMin - timeToMin(state.gStart);
+  let h = `<p style="font-size:13px;color:#555;margin-bottom:12px;line-height:1.65"><strong>${state.rounds.length} rounds</strong>, <strong>${state.tables.length} table(s)</strong>. Pool play runs from <strong>${minToTime(timeToMin(state.gStart))}</strong> to <strong>${minToTime(endMin)}</strong> — about <strong>${Math.floor(totalMin/60)}h ${totalMin%60}m</strong> total.</p><table class="adv"><thead><tr><th>Group</th><th>Teams</th><th>Table(s)</th><th>Rounds</th><th>Matches</th></tr></thead><tbody>`;
+  groupNames.forEach(g => {
+    const gTeams = [...state.groups[g]];
+    const gMatches = state.schedule.filter(s => s.group === g);
+    const gRounds = [...new Set(gMatches.map(s => s.round))].length;
+    const gTables = [...new Set(gMatches.map(s => s.table))].sort(naturalSort).join(', ');
+    h += `<tr><td style="font-weight:600">${g}</td><td>${gTeams.length}</td><td>${gTables}</td><td>${gRounds}</td><td>${gMatches.length}</td></tr>`;
+  });
+  h += `</tbody></table>`;
+  document.getElementById('advisoryBox').innerHTML = h;
+}
+
+function saveJSON() {
+  const data = { breaks:state.breaks, gStart:state.gStart, gMatch:state.gMatch, gGap:state.gGap, rawFixtures:document.getElementById('fixtureInput').value };
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)], {type:'application/json'}));
+  a.download = 'soccer-schedule.json'; a.click();
+}
+function loadJSON(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const d = JSON.parse(ev.target.result);
+      if (d.breaks) { state.breaks = d.breaks; renderBreaks(); }
+      if (d.gStart) document.getElementById('gStart').value = d.gStart;
+      if (d.gMatch) document.getElementById('gMatch').value = d.gMatch;
+      if (d.gGap !== undefined) document.getElementById('gGap').value = d.gGap;
+      if (d.rawFixtures) { document.getElementById('fixtureInput').value = d.rawFixtures; buildSchedule(); }
+    } catch(err) { alert('Error loading file: '+err.message); }
+  };
+  r.readAsText(f); e.target.value = '';
+}
+function buildTimeline() {
+  const sorted = [...state.schedule].sort((a,b) => a.startMin - b.startMin || naturalSort(a.table, b.table));
+  const slotMap = {};
+  sorted.forEach(s => { if (!slotMap[s.startMin]) slotMap[s.startMin] = []; slotMap[s.startMin].push(s); });
+  const uniqueTimes = [...new Set(sorted.map(s => s.startMin))].sort((a,b) => a-b);
+  const usedBreaks = new Set();
+  const timeline = [];
+  for (const t of uniqueTimes) {
+    for (const brk of state.breakRanges) {
+      if (!usedBreaks.has(brk.label) && brk.startMin <= t) { timeline.push({ type:'break', brk }); usedBreaks.add(brk.label); }
+    }
+    timeline.push({ type:'matches', startMin: t, matches: slotMap[t] });
+  }
+  return timeline;
+}
+
+async function exportXLSX() {
+  if (!state.schedule.length) { alert('Build a schedule first.'); return; }
+  if (typeof ExcelJS === 'undefined') { alert('Export library still loading — try again in a moment.'); return; }
+
+  // ── Palette ──────────────────────────────────────────────────────
+  const C = {
+    navy:      'FF1b2945',
+    navyDark:  'FF152035',
+    navyMid:   'FF263a5e',
+    green:     'FF3db166',
+    greenDark: 'FF2d9a55',
+    blueTint:  'FFeef1f8',
+    grayTint:  'FFf4f6fa',
+    white:     'FFFFFFFF',
+    ink:       'FF0d0d0d',
+    muted:     'FF888888',
+    border:    'FFd0d7e3',
+    borderDark:'FF263a5e',
+  };
+  const fill  = argb => ({ type:'pattern', pattern:'solid', fgColor:{argb} });
+  const font  = (opts) => ({ name:'Calibri', size:10, ...opts });
+  const align = (h, v='middle') => ({ horizontal:h, vertical:v, wrapText:false });
+  const thinBorder = color => ({ style:'thin', color:{argb:color} });
+  const hairBorder = color => ({ style:'hair', color:{argb:color} });
+
+  // ── Workbook setup ────────────────────────────────────────────────
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Soccer Scheduler';
+  const ws = wb.addWorksheet('Schedule', {
+    pageSetup: { paperSize:9, orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0,
+                 margins:{left:0.5,right:0.5,top:0.5,bottom:0.5,header:0,footer:0} },
+    views: [{ showGridLines: false }]
+  });
+
+  ws.columns = [
+    { width:12 }, // A TABLE
+    { width:8  }, // B GROUP
+    { width:8  }, // C TIME
+    { width:26 }, // D TEAM A
+    { width:26 }, // E ORG A
+    { width:4  }, // F vs
+    { width:26 }, // G TEAM B
+    { width:26 }, // H ORG B
+    { width:2  }, // I spacer
+    { width:2  }, // J spacer
+    { width:8  }, // K key time
+    { width:26 }, // L key event
+  ];
+
+  // ── Helper: style a section-header row (navy, merged A–H) ─────────
+  const sectionHeader = (text) => {
+    const r = ws.addRow([text]);
+    ws.mergeCells(r.number, 1, r.number, 8);
+    r.height = 18;
+    r.getCell(1).fill = fill(C.navy);
+    r.getCell(1).font = font({ bold:true, size:12, color:{argb:C.white} });
+    r.getCell(1).alignment = align('left');
+    return r;
+  };
+
+  // ── Helper: style column-header row ──────────────────────────────
+  const colHeader = (values) => {
+    const r = ws.addRow(values);
+    r.height = 14;
+    r.eachCell({ includeEmpty: true }, (cell, col) => {
+      if (col <= 8 || col === 11 || col === 12) {
+        cell.fill = fill(C.navyMid);
+        cell.font = font({ bold:true, size:9, color:{argb:'FFb0c4e8'} });
+        cell.alignment = align('left');
+        cell.border = { bottom: thinBorder(C.navyDark) };
+      }
+    });
+    return r;
+  };
+
+  // ── Key times sidebar data ────────────────────────────────────────
+  const lastRound = state.rounds[state.rounds.length-1];
+  const endMin = (state.roundTimes[lastRound]||0) + state.gMatch;
+  const keyTimes = [
+    [minToTime(timeToMin(state.gStart)), 'First round starts'],
+    ...state.breakRanges.map(b => [minToTime(b.startMin), `${b.label} begins`]),
+    ...state.breakRanges.map(b => [minToTime(b.endMin), 'Play resumes']),
+    [minToTime(endMin), 'Pool play finishes'],
+  ].sort((a,b) => a[0].localeCompare(b[0]));
+  let ki = 0;
+
+  const attachKey = (row) => {
+    if (ki >= keyTimes.length) return;
+    const [t, label] = keyTimes[ki++];
+    row.getCell(11).value = t;
+    row.getCell(12).value = label;
+    row.getCell(11).fill = fill(C.grayTint);
+    row.getCell(12).fill = fill(C.grayTint);
+    row.getCell(11).font = font({ bold:true, color:{argb:C.navy} });
+    row.getCell(12).font = font({ color:{argb:'FF555566'} });
+    row.getCell(11).alignment = align('center');
+    row.getCell(11).border = { right: hairBorder(C.border), bottom: hairBorder(C.border) };
+    row.getCell(12).border = { bottom: hairBorder(C.border) };
+  };
+
+  // ── Title row ─────────────────────────────────────────────────────
+  const titleRow = ws.addRow(['ROBOCUP JUNIOR SOCCER SCHEDULE','','','','','','','','','','KEY TIMES','']);
+  ws.mergeCells(titleRow.number, 1, titleRow.number, 8);
+  ws.mergeCells(titleRow.number, 11, titleRow.number, 12);
+  titleRow.height = 26;
+  titleRow.getCell(1).fill = fill(C.navyDark);
+  titleRow.getCell(1).font = font({ bold:true, size:15, color:{argb:C.white} });
+  titleRow.getCell(1).alignment = align('left', 'middle');
+  titleRow.getCell(11).fill = fill(C.navyDark);
+  titleRow.getCell(11).font = font({ bold:true, size:11, color:{argb:C.white} });
+  titleRow.getCell(11).alignment = align('center', 'middle');
+
+  ws.addRow([]); // spacer
+
+  // ── GROUP STAGE section ───────────────────────────────────────────
+  sectionHeader('GROUP STAGE MATCHES');
+  colHeader(['TABLE','GROUP','TIME','TEAM A','ORGANISATION','','TEAM B','ORGANISATION','','','TIME','EVENT']);
+
+  const timeline = buildTimeline();
+  for (const entry of timeline) {
+    if (entry.type === 'break') {
+      const { brk } = entry;
+      const label = `${minToTime(brk.startMin)} — ${minToTime(brk.endMin)}   ${brk.label.toUpperCase()}`;
+      const r = ws.addRow([label]);
+      ws.mergeCells(r.number, 1, r.number, 8);
+      r.height = 16;
+      r.getCell(1).fill = fill(C.green);
+      r.getCell(1).font = font({ bold:true, color:{argb:C.white} });
+      r.getCell(1).alignment = align('center');
+      attachKey(r);
+    } else {
+      entry.matches.forEach((m, i) => {
+        const r = ws.addRow([
+          `Table ${m.table}`, m.group,
+          i === 0 ? minToTime(entry.startMin) : '',
+          m.homeTeam, m.homeOrg||'', 'vs', m.awayTeam, m.awayOrg||''
+        ]);
+        r.height = 16;
+
+        // Table cell
+        r.getCell(1).font = font({ bold:true });
+        r.getCell(1).alignment = align('left');
+
+        // Group cell — subtle tint
+        r.getCell(2).font = font({ bold:true, color:{argb:C.navy} });
+        r.getCell(2).alignment = align('center');
+
+        // Time cell — only on first row of slot
+        if (i === 0) {
+          r.getCell(3).fill = fill(C.blueTint);
+          r.getCell(3).font = font({ bold:true, color:{argb:C.navy} });
+          r.getCell(3).alignment = align('center');
+          r.getCell(3).border = { right: thinBorder(C.border) };
+        }
+
+        // vs cell
+        r.getCell(6).font = font({ italic:true, color:{argb:C.muted} });
+        r.getCell(6).alignment = align('center');
+
+        // Team name cells bold
+        r.getCell(4).font = font({ bold:true });
+        r.getCell(7).font = font({ bold:true });
+
+        // Org cells muted
+        r.getCell(5).font = font({ color:{argb:'FF555566'} });
+        r.getCell(8).font = font({ color:{argb:'FF555566'} });
+
+        // Row bottom border
+        for (let c = 1; c <= 8; c++) {
+          const existing = r.getCell(c).border || {};
+          r.getCell(c).border = { ...existing, bottom: hairBorder(C.border) };
+        }
+
+        // Alternate row shading
+        if (i % 2 === 1) {
+          for (let c = 1; c <= 8; c++) {
+            if (c !== 3) r.getCell(c).fill = fill('FFF9FAFB');
+          }
+        }
+
+        if (i === 0) attachKey(r);
+      });
+    }
+  }
+
+  // Flush any remaining key times
+  while (ki < keyTimes.length) { const r = ws.addRow([]); attachKey(r); }
+
+  // ── FINALS section ────────────────────────────────────────────────
+  const groupNames = Object.keys(state.groups).sort(naturalSort);
+  if (groupNames.length >= 2) {
+    ws.addRow([]);
+    sectionHeader('FINALS / KNOCKOUT ROUNDS');
+    colHeader(['TABLE','ROUND','TIME','TEAM A','','','TEAM B','']);
+    const rounds = groupNames.length >= 3
+      ? ['QUARTER-FINALS','SEMI-FINALS','GRAND FINAL']
+      : ['SEMI-FINALS','GRAND FINAL'];
+    rounds.forEach(rname => {
+      const r = ws.addRow([`${rname} — TBC`]);
+      ws.mergeCells(r.number, 1, r.number, 8);
+      r.height = 15;
+      r.getCell(1).fill = fill('FFf0f4fa');
+      r.getCell(1).font = font({ bold:true, italic:true, color:{argb:C.navy} });
+      r.getCell(1).border = { bottom: hairBorder(C.border) };
+    });
+  }
+
+  // ── Download ──────────────────────────────────────────────────────
+  const buf = await wb.xlsx.writeBuffer();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+  a.download = 'soccer-schedule.xlsx';
+  a.click();
+}
+
+function printSchedule() {
+  if (!state.schedule.length) { alert('Build a schedule first.'); return; }
+
+  const lastRound = state.rounds[state.rounds.length-1];
+  const endMin = (state.roundTimes[lastRound]||0) + state.gMatch;
+  const summary = `${state.rounds.length} rounds · ${state.tables.length} table(s) · ${state.schedule.length} matches · ${minToTime(timeToMin(state.gStart))} – ${minToTime(endMin)}`;
+
+  // Rebuild timetable HTML for print (no sticky, clean structure)
+  const timeline = buildTimeline();
+  let ttRows = '';
+  for (const entry of timeline) {
+    if (entry.type === 'break') {
+      const { brk } = entry;
+      ttRows += `<tr><td class="p-time">${minToTime(brk.startMin)}</td><td class="p-break" colspan="${state.tables.length+1}">${brk.label} — ${brk.duration} min</td></tr>`;
+    } else {
+      let cells = '';
+      state.tables.forEach(tbl => {
+        const ms = entry.matches.filter(s => s.table === tbl);
+        if (ms.length) {
+          cells += `<td class="p-match">` + ms.map(m =>
+            `<div class="p-chip" style="background:${m.color}12"><span class="p-dot" style="background:${m.color}"></span><div><div class="p-mu">${m.homeTeam} <span class="p-vs">vs</span> ${m.awayTeam}</div><div class="p-meta">${m.group}${m.homeOrg ? ' · '+m.homeOrg : ''}</div></div></div>`
+          ).join('') + `</td>`;
+        } else { cells += `<td class="p-match"></td>`; }
+      });
+      ttRows += `<tr><td class="p-time">${minToTime(entry.startMin)}</td><td class="p-round">${entry.matches[0]?.round||''}</td>${cells}</tr>`;
+    }
+  }
+  const ttHead = `<th class="p-th">Time</th><th class="p-th">Round</th>` + state.tables.map(t => `<th class="p-th">Table ${t}</th>`).join('');
+
+  // Rebuild per-team HTML for print
+  const teamNames = Object.keys(state.teams).sort();
+  const teamCards = teamNames.map(name => {
+    const info = state.teams[name];
+    const matches = state.schedule.filter(s => s.homeTeam===name||s.awayTeam===name).sort((a,b)=>a.startMin-b.startMin);
+    const rows = matches.map(m => {
+      const opp = m.homeTeam===name ? m.awayTeam : m.homeTeam;
+      return `<div class="pt-row"><span class="pt-time">${m.time}</span><span class="pt-opp">vs ${opp}</span><span class="pt-tbl">Table ${m.table}</span></div>`;
+    }).join('');
+    return `<div class="pt-card"><div class="pt-head" style="border-top:3px solid ${info.color}"><div class="pt-name">${name}</div><div class="pt-org">${info.org || info.group}</div></div>${rows}</div>`;
+  }).join('');
+
+  const doc = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<title>Soccer Schedule</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',Arial,sans-serif;font-size:9pt;color:#0d0d0d;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+  @page tt-page{size:A4 landscape;margin:12mm 14mm}
+  @page team-page{size:A4 portrait;margin:12mm 14mm}
+
+  .tt-section{page:tt-page}
+  .team-section{page:team-page;break-before:page}
+
+  .doc-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8pt;padding-bottom:6pt;border-bottom:2pt solid #1b2945}
+  .doc-title{font-size:13pt;font-weight:700;color:#1b2945}
+  .doc-sub{font-size:8pt;color:#666}
+
+  /* Timetable */
+  table.ptt{border-collapse:collapse;width:100%;font-size:8pt}
+  .p-th{background:#1b2945;color:#fff;font-size:7pt;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:5pt 8pt;text-align:left;border:0.5pt solid #263a5e;white-space:nowrap}
+  .p-time{font-size:9.5pt;font-weight:700;color:#1b2945;background:#eef1f8;padding:0 8pt;text-align:right;white-space:nowrap;border:0.5pt solid #e0e0e0;vertical-align:middle}
+  .p-round{font-size:8pt;font-weight:600;color:#1b2945;padding:0 8pt;white-space:nowrap;border:0.5pt solid #e0e0e0;vertical-align:middle}
+  .p-match{border:0.5pt solid #e0e0e0;vertical-align:top;padding:0;min-width:48mm}
+  .p-break{background:#3db166;color:#fff;font-size:8.5pt;font-weight:700;text-align:center;padding:6pt;border:0.5pt solid #2d9a55}
+  .p-chip{display:flex;gap:4pt;align-items:flex-start;padding:4pt 5pt;line-height:1.3}
+  .p-chip+.p-chip{border-top:0.5pt solid #f0f0f0}
+  .p-dot{width:6pt;height:6pt;border-radius:50%;flex-shrink:0;margin-top:1.5pt}
+  .p-mu{font-weight:600;font-size:8pt}
+  .p-vs{font-weight:400;color:#999}
+  .p-meta{font-size:7pt;color:#777;margin-top:1pt}
+
+  /* Per-team cards */
+  .pt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7pt}
+  .pt-card{border:0.75pt solid #d0d7e3;break-inside:avoid}
+  .pt-head{padding:7pt 9pt 6pt;background:#f8f9fc;border-bottom:0.75pt solid #d0d7e3}
+  .pt-name{font-size:9.5pt;font-weight:700;color:#1b2945}
+  .pt-org{font-size:7.5pt;color:#777;margin-top:1pt}
+  .pt-row{display:flex;align-items:center;padding:5pt 9pt;border-bottom:0.5pt solid #f0f0f0;gap:6pt;font-size:8.5pt}
+  .pt-row:last-child{border-bottom:none}
+  .pt-time{font-weight:700;min-width:28pt;color:#1b2945;flex-shrink:0}
+  .pt-opp{flex:1}
+  .pt-tbl{font-size:7.5pt;color:#888;white-space:nowrap}
+</style>
+</head><body>
+
+<div class="tt-section">
+  <div class="doc-hd">
+    <span class="doc-title">Soccer Schedule — Group Stage</span>
+    <span class="doc-sub">${summary}</span>
+  </div>
+  <table class="ptt"><thead><tr>${ttHead}</tr></thead><tbody>${ttRows}</tbody></table>
+</div>
+
+<div class="team-section">
+  <div class="doc-hd">
+    <span class="doc-title">Per-Team Schedule</span>
+    <span class="doc-sub">${teamNames.length} teams · match times and table assignments</span>
+  </div>
+  <div class="pt-grid">${teamCards}</div>
+</div>
+
+</body></html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) { alert('Allow popups for this page, then click Print / PDF again.'); return; }
+  win.document.write(doc);
+  win.document.close();
+  win.onload = () => { win.focus(); setTimeout(() => win.print(), 400); };
+}
+
+function timeToMin(t) { const [h,m] = t.split(':').map(Number); return h*60+m; }
+function minToTime(m) { const h=Math.floor(m/60), mn=m%60; return `${String(h).padStart(2,'0')}:${String(mn).padStart(2,'0')}`; }
+</script>
+</body>
+</html>
